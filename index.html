@@ -1,0 +1,183 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart To-Do Manager</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="container">
+
+    <header class="topbar">
+        <div>
+            <h1>Smart To-Do Manager</h1>
+            <p>Organize your work. Achieve your goals.</p>
+        </div>
+        <a href="{{ url_for('export') }}" class="export-btn">
+            Export CSV
+        </a>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="alert {{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endwith %}
+
+    <section class="stats">
+        <div class="stat-card">
+            <span>Total Tasks</span>
+            <h2>{{ stats.total }}</h2>
+        </div>
+
+        <div class="stat-card">
+            <span>Completed</span>
+            <h2>{{ stats.completed }}</h2>
+        </div>
+
+        <div class="stat-card">
+            <span>Pending</span>
+            <h2>{{ stats.pending }}</h2>
+        </div>
+
+        <div class="stat-card">
+            <span>Completion</span>
+            <h2>{{ stats.percentage }}%</h2>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Add New Task</h2>
+
+        <form action="{{ url_for('add') }}" method="POST">
+            <input type="text" name="title"
+                   placeholder="Enter task title..."
+                   required maxlength="120">
+
+            <textarea name="description"
+                      placeholder="Task description (optional)"
+                      maxlength="500"></textarea>
+
+            <div class="form-row">
+                <select name="priority">
+                    <option value="High">High Priority</option>
+                    <option value="Medium" selected>Medium Priority</option>
+                    <option value="Low">Low Priority</option>
+                </select>
+
+                <input type="date" name="due_date">
+            </div>
+
+            <button type="submit" class="primary-btn">
+                + Add Task
+            </button>
+        </form>
+    </section>
+
+    <section class="panel">
+        <h2>My Tasks</h2>
+
+        <form method="GET" action="{{ url_for('home') }}"
+              class="filter-form">
+
+            <input type="search" name="search"
+                   placeholder="Search tasks..."
+                   value="{{ search }}">
+
+            <select name="status">
+                <option value="all"
+                    {% if status == 'all' %}selected{% endif %}>
+                    All Tasks
+                </option>
+
+                <option value="pending"
+                    {% if status == 'pending' %}selected{% endif %}>
+                    Pending
+                </option>
+
+                <option value="completed"
+                    {% if status == 'completed' %}selected{% endif %}>
+                    Completed
+                </option>
+            </select>
+
+            <button type="submit" class="secondary-btn">
+                Search / Filter
+            </button>
+
+            <a href="{{ url_for('home') }}" class="reset-btn">
+                Reset
+            </a>
+        </form>
+
+        <div class="task-list">
+
+            {% for task in tasks %}
+            <article class="task-card">
+
+                <div class="task-content">
+                    <h3 class="{% if task.completed %}done{% endif %}">
+                        {{ task.title }}
+                    </h3>
+
+                    <p>{{ task.description }}</p>
+
+                    <div class="task-meta">
+                        <span class="priority {{ task.priority|lower }}">
+                            {{ task.priority }}
+                        </span>
+
+                        <span>
+                            Due: {{ task.due_date or 'Not set' }}
+                        </span>
+
+                        <span>
+                            {{ 'Completed' if task.completed else 'Pending' }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="task-actions">
+
+                    <form method="POST"
+                          action="{{ url_for('toggle', task_id=task.id) }}">
+                        <button type="submit" class="secondary-btn">
+                            {{ 'Undo' if task.completed else 'Complete' }}
+                        </button>
+                    </form>
+
+                    <a href="{{ url_for('edit', task_id=task.id) }}"
+                       class="edit-btn">Edit</a>
+
+                    <form method="POST"
+                          action="{{ url_for('delete', task_id=task.id) }}"
+                          onsubmit="return confirm('Delete this task?');">
+                        <button type="submit" class="delete-btn">
+                            Delete
+                        </button>
+                    </form>
+
+                </div>
+
+            </article>
+
+            {% else %}
+                <p class="empty">No tasks found. Add your first task!</p>
+            {% endfor %}
+
+        </div>
+    </section>
+
+    <footer>
+        Smart To-Do Manager | Built with Python & Flask
+    </footer>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
